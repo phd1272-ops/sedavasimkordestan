@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>فرم ثبت‌نام</title>
+<style>
+  body { font-family: Tahoma, sans-serif; background:#f4f6f8; padding:20px; }
+  .container { max-width: 800px; margin:auto; background:#fff; padding:25px;
+               border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,.1); }
+  h2 { text-align:center; color:#333; }
+  input, button { width:100%; padding:10px; margin:8px 0;
+                  border:1px solid #ccc; border-radius:8px;
+                  font-family:inherit; font-size:14px; box-sizing:border-box; }
+  button { background:#2c7be5; color:#fff; border:none; cursor:pointer; font-weight:bold; }
+  button:hover { background:#1a5bb8; }
+  table { width:100%; border-collapse:collapse; margin-top:20px; font-size:13px; }
+  th, td { border:1px solid #ddd; padding:8px; text-align:center; }
+  th { background:#2c7be5; color:#fff; }
+  tr:nth-child(even){ background:#f9f9f9; }
+  .msg { text-align:center; padding:8px; margin-top:10px; border-radius:6px; }
+  .ok { background:#d4edda; color:#155724; }
+  .err { background:#f8d7da; color:#721c24; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>فرم ثبت اطلاعات</h2>
+
+  <form id="form">
+    <input type="text" id="firstName" placeholder="نام" required>
+    <input type="text" id="lastName" placeholder="نام خانوادگی" required>
+    <input type="tel" id="phone" placeholder="شماره تلفن" required>
+    <input type="text" id="product" placeholder="کالا" required>
+    <button type="submit">ثبت</button>
+  </form>
+
+  <div id="msg"></div>
+
+  <h2 style="margin-top:30px;">لیست ثبت‌نام‌شدگان</h2>
+  <table id="table">
+    <thead>
+      <tr>
+        <th>#</th><th>نام</th><th>نام خانوادگی</th>
+        <th>تلفن</th><th>کالا</th><th>تاریخ</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+const form = document.getElementById('form');
+const msg = document.getElementById('msg');
+const tbody = document.querySelector('#table tbody');
+
+async function loadRecords() {
+  const res = await fetch('/api/records');
+  const data = await res.json();
+  tbody.innerHTML = '';
+  data.forEach((r, i) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${i + 1}</td>
+      <td>${r.firstName}</td>
+      <td>${r.lastName}</td>
+      <td>${r.phone}</td>
+      <td>${r.product}</td>
+      <td>${r.date}</td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const body = {
+    firstName: document.getElementById('firstName').value.trim(),
+    lastName:  document.getElementById('lastName').value.trim(),
+    phone:     document.getElementById('phone').value.trim(),
+    product:   document.getElementById('product').value.trim()
+  };
+
+  const res = await fetch('/api/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+
+  const result = await res.json();
+
+  if (result.success) {
+    msg.textContent = '✅ با موفقیت ثبت شد';
+    msg.className = 'msg ok';
+    form.reset();
+    loadRecords();
+  } else {
+    msg.textContent = '❌ ' + (result.error || 'خطا');
+    msg.className = 'msg err';
+  }
+});
+
+loadRecords();
+</script>
+</body>
+</html>
